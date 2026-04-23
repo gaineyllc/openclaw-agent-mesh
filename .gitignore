@@ -1,0 +1,40 @@
+# Secrets
+*.secret
+*.key
+.env.local
+secrets/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Model files (too large for git)
+*.safetensors
+*.gguf
+*.bin
+models/
+
+# Session data
+sessions/
+*.jsonl
+*.lock
+
+# Docker data
+.flux-data/
+
+# Editor
+.vscode/
+.idea/
+
+# Credentials (NEVER commit these)
+TELEGRAM-BOT-CREDENTIALS.md
+GITEA-CREDENTIALS.md

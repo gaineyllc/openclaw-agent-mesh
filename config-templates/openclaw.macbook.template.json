@@ -1,0 +1,193 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "vllm/huihui-ai/Huihui-Qwen3-Coder-Next-abliterated",
+        "fallbacks": [
+          "ollama/huihui_ai/qwen3.5-abliterated:122b"
+        ]
+      },
+      "memorySearch": {
+        "enabled": true,
+        "provider": "openai",
+        "model": "sentence-transformers/all-MiniLM-L6-v2",
+        "remote": {
+          "baseUrl": "http://YOUR_GB10_TAILSCALE_IP:8001/v1",
+          "apiKey": "local"
+        },
+        "fallback": "none"
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "15m"
+      },
+      "subagents": {
+        "maxConcurrent": 2
+      },
+      "compaction": {
+        "mode": "safeguard"
+      }
+    },
+    "list": [
+      {
+        "id": "main"
+      },
+      {
+        "id": "verifier",
+        "name": "verifier",
+        "workspace": "~/.openclaw/workspace-verifier",
+        "agentDir": "~/.openclaw/agents/verifier/agent",
+        "model": "ollama/huihui_ai/qwen3.5-abliterated:122b"
+      }
+    ]
+  },
+  "models": {
+    "providers": {
+      "vllm": {
+        "baseUrl": "http://YOUR_GB10_TAILSCALE_IP:8000/v1",
+        "api": "openai-completions",
+        "auth": "api-key",
+        "apiKey": "YOUR_VLLM_API_KEY",
+        "models": [
+          {
+            "id": "huihui-ai/Huihui-Qwen3-Coder-Next-abliterated",
+            "name": "Qwen3-Coder-Next-abliterated (GB10)",
+            "contextWindow": 262144,
+            "input": ["text"]
+          }
+        ]
+      },
+      "ollama": {
+        "baseUrl": "http://127.0.0.1:11434/v1",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "huihui_ai/qwen3.5-abliterated:122b",
+            "name": "Qwen3.5-122B-A10B-abliterated (local ollama)",
+            "contextWindow": 131072,
+            "input": ["text"]
+          }
+        ]
+      }
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "port": 18789,
+    "auth": {
+      "mode": "token",
+      "token": "YOUR_GATEWAY_TOKEN"
+    },
+    "tailscale": {
+      "mode": "serve"
+    },
+    "trustedProxies": ["127.0.0.1", "::1"],
+    "controlUi": {
+      "dangerouslyDisableDeviceAuth": true
+    }
+  },
+  "plugins": {
+    "entries": {
+      "vllm": { "enabled": true },
+      "memory-core": {
+        "enabled": true,
+        "config": {
+          "dreaming": {
+            "enabled": true,
+            "timezone": "America/New_York",
+            "frequency": "0 4 * * *"
+          }
+        }
+      },
+      "lossless-claw": {
+        "enabled": true,
+        "config": {
+          "summaryModel": "vllm/huihui-ai/Huihui-Qwen3-Coder-Next-abliterated",
+          "contextThreshold": 0.8,
+          "freshTailCount": 48,
+          "incrementalMaxDepth": 1,
+          "ignoreSessionPatterns": [
+            "agent:*:cron:**",
+            "agent:*:subagent:**"
+          ]
+        }
+      },
+      "tavily": {
+        "enabled": true,
+        "config": {
+          "webSearch": {
+            "apiKey": "YOUR_TAVILY_API_KEY"
+          }
+        }
+      },
+      "ollama": { "enabled": true }
+    },
+    "slots": {
+      "contextEngine": "lossless-claw"
+    },
+    "allow": [
+      "lossless-claw", "telegram", "ollama", "vllm", "memory-core", "tavily"
+    ]
+  },
+  "tools": {
+    "web": { "search": { "enabled": true } },
+    "profile": "coding"
+  },
+  "mcp": {
+    "servers": {
+      "fast-io": {
+        "url": "https://mcp.fast.io/sse",
+        "headers": {
+          "Authorization": "Bearer YOUR_FASTIO_API_KEY"
+        }
+      },
+      "flux": {
+        "command": "docker",
+        "args": [
+          "run", "-i", "--rm",
+          "-v", "/Users/YOU/.flux-data:/app/packages/data",
+          "-v", "/Users/YOU/.flux-data/blobs:/home/flux",
+          "-e", "FLUX_DATA=/app/packages/data/flux.sqlite",
+          "-e", "HOME=/app/packages/data",
+          "flux-mcp", "bun", "packages/mcp/dist/index.js"
+        ]
+      }
+    }
+  },
+  "env": {
+    "vars": {
+      "FASTIO_API_KEY": "YOUR_FASTIO_API_KEY"
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "groups": {
+        "YOUR_TELEGRAM_GROUP_ID": {
+          "requireMention": false
+        }
+      },
+      "execApprovals": { "enabled": false },
+      "accounts": {
+        "default": {
+          "dmPolicy": "allowlist",
+          "allowFrom": ["YOUR_TELEGRAM_USER_ID"],
+          "groupAllowFrom": ["YOUR_TELEGRAM_USER_ID"],
+          "botToken": "YOUR_TELEGRAM_BOT_TOKEN"
+        },
+        "verifier": {
+          "enabled": true,
+          "botToken": "YOUR_VERIFIER_BOT_TOKEN",
+          "dmPolicy": "allowlist",
+          "allowFrom": ["YOUR_TELEGRAM_USER_ID"],
+          "groupAllowFrom": ["YOUR_TELEGRAM_USER_ID"],
+          "groups": {
+            "YOUR_TELEGRAM_GROUP_ID": {
+              "requireMention": true
+            }
+          }
+        }
+      }
+    }
+  }
+}

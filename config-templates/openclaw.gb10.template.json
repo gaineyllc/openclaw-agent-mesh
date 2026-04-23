@@ -1,0 +1,139 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "vllm/huihui-ai/Huihui-Qwen3-Coder-Next-abliterated",
+        "fallbacks": []
+      },
+      "memorySearch": {
+        "enabled": true,
+        "provider": "openai",
+        "model": "sentence-transformers/all-MiniLM-L6-v2",
+        "remote": {
+          "baseUrl": "http://127.0.0.1:8001/v1",
+          "apiKey": "local"
+        },
+        "fallback": "none"
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "15m"
+      },
+      "subagents": {
+        "maxConcurrent": 2
+      },
+      "compaction": {
+        "mode": "safeguard"
+      }
+    },
+    "list": [
+      {
+        "id": "main"
+      }
+    ]
+  },
+  "models": {
+    "providers": {
+      "vllm": {
+        "baseUrl": "http://127.0.0.1:8000/v1",
+        "api": "openai-completions",
+        "auth": "api-key",
+        "apiKey": "YOUR_VLLM_API_KEY",
+        "models": [
+          {
+            "id": "huihui-ai/Huihui-Qwen3-Coder-Next-abliterated",
+            "name": "Qwen3-Coder-Next-abliterated (local)",
+            "contextWindow": 262144,
+            "input": ["text"]
+          }
+        ]
+      }
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "port": 18789,
+    "auth": {
+      "mode": "token",
+      "token": "YOUR_GATEWAY_TOKEN"
+    },
+    "tailscale": {
+      "mode": "serve"
+    },
+    "trustedProxies": ["127.0.0.1", "::1"],
+    "controlUi": {
+      "dangerouslyDisableDeviceAuth": true
+    }
+  },
+  "plugins": {
+    "entries": {
+      "vllm": { "enabled": true },
+      "memory-core": {
+        "enabled": true,
+        "config": {
+          "dreaming": {
+            "enabled": true,
+            "timezone": "America/New_York",
+            "frequency": "0 4 * * *"
+          }
+        }
+      },
+      "lossless-claw": {
+        "enabled": true,
+        "config": {
+          "summaryModel": "vllm/huihui-ai/Huihui-Qwen3-Coder-Next-abliterated",
+          "contextThreshold": 0.8,
+          "freshTailCount": 48,
+          "incrementalMaxDepth": 1,
+          "ignoreSessionPatterns": [
+            "agent:*:cron:**",
+            "agent:*:subagent:**"
+          ]
+        }
+      }
+    },
+    "slots": {
+      "contextEngine": "lossless-claw"
+    },
+    "allow": [
+      "lossless-claw", "telegram", "vllm", "memory-core"
+    ]
+  },
+  "tools": {
+    "web": { "search": { "enabled": true } },
+    "profile": "coding"
+  },
+  "mcp": {
+    "servers": {
+      "flux": {
+        "command": "docker",
+        "args": [
+          "run", "-i", "--rm", "--network", "host",
+          "-e", "FLUX_DATA=/tmp/flux-mcp.sqlite",
+          "-e", "HOME=/tmp",
+          "-e", "FLUX_SERVER=http://YOUR_MACBOOK_TAILSCALE_HOSTNAME:3000",
+          "flux-mcp", "bun", "packages/mcp/dist/index.js"
+        ]
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "groups": {
+        "YOUR_TELEGRAM_GROUP_ID": {
+          "requireMention": false
+        }
+      },
+      "execApprovals": { "enabled": false },
+      "accounts": {
+        "default": {
+          "dmPolicy": "allowlist",
+          "allowFrom": ["YOUR_TELEGRAM_USER_ID"],
+          "groupAllowFrom": ["YOUR_TELEGRAM_USER_ID"],
+          "botToken": "YOUR_BUILDER_BOT_TOKEN"
+        }
+      }
+    }
+  }
+}
